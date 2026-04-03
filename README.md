@@ -1,59 +1,147 @@
-# Graph-Based Representation of Infraestructure-as-Code: Enabling Semantic Reasoning for Containerized Systems.
+# Representação Baseada em Grafos de Infraestrutura como Código: Possibilitando o Raciocínio Semântico para Sistemas Conteinerizados
 
-This project was developed as part of the Master's program at PPGC — Programa de Pós-Graduação em Computação, Universidade Federal do Rio Grande do Sul (UFRGS).
+Este artigo propõe um novo framework que integra um Grafo de Conhecimento baseado em ontologia com o Model Context Protocol (MCP) para o gerenciamento semântico de infraestruturas conteinerizadas. A estrutura aborda uma lacuna nas plataformas de orquestração ao fornecer uma representação semântica unificada da topologia, alimentada por processo de Extração, Transformação e Carga (ETL) que analisa arquivos do Docker Compose e disponibiliza o conhecimento para Large Language Models via uma camada de ferramentas. Essa abordagem permite que usuários realizem consultas em linguagem natural para obter insights profundos sobre a configuração da infraestrutura. A abordagem foi validada por meio de um experimento controlado simulando um cenário DevOps, no qual o sistema identificou com sucesso falhas de integridade em volumes e riscos de movimentação lateral — problemas que a análise tradicional dificilmente detectaria. Os resultados demonstram a superioridade da estrutura na auditoria automatizada e na detecção de conflitos, preenchendo a lacuna entre artefatos brutos de Infraestrutura como Código e o raciocínio dinâmico do sistema para um gerenciamento de contêineres mais inteligente e explicável.
 
-_____
+---
 
-This project implements a system that parses Infrastructure-as-Code (specifically Docker Compose definition files) into a Knowledge Graph (Neo4j) using a custom OWL ontology. It then exposes this graph to Large Language Models (LLMs) via the Model Context Protocol (MCP), enabling AI agents to reason about topology, detect port conflicts, and analyze service dependencies with high factual accuracy.
+# Selos Considerados
 
-## 🚀 Features
-- **Semantic Parsing**: Converts static YAML files into a dynamic Graph Database, mapping Services, Networks, Volumes, Ports, and Environment Variables.
+Os autores julgam como considerados no processo de avaliação os selos:
 
-- **Two-Pass Ingestion**: Robust Python parser that handles forward references and ensures idempotency (prevents duplicate nodes).
+- Artefatos Disponíveis (SeloD)
+- Artefatos Funcionais (SeloF)
+- Artefatos Sustentáveis (SeloS)
+- Experimentos Reprodutíveis (SeloR)
 
-- **Scope Isolation**: Unique URI generation strategy to prevent property collisions between similar services in different environments (e.g., Production vs. Test).
+Com base nos códigos e documentação disponibilizados neste e nos repositórios relacionados.
 
-- **Conflict Detection**: Automatically identifies critical issues like Host Port Collisions across different compose files.
+---
 
-- **MCP Integration**: Exposes semantic tools (find_dependencies, inspect_network, check_port_conflicts) to LLMs like Claude, enabling natural language auditing.
+# Requisitos do Sistema
 
-## 📂 Project Structure
-```text
-compose-kg-mcp/
-├── mcp_server/
-│   └── server.py          # The MCP Server implementation
-├── parser_neo4j/           \
-│   └── docker_composes/   # Folder with docker compose files for parsing onto neo4j
-│   └── parser.py          # The ETL script (YAML -> Neo4j)
-├── ontology/           
-│   └── base_ontology.ttl  # The OWL Ontology definition
-├── docker_compose.yaml    # Neo4j docker compose
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment variables (GitIgnored)
-└── README.md \
+- **Docker e Docker Compose** (Para levantar o banco de dados de grafos Neo4j).
+- **Python 3.9+** (Para executar o parser ETL e rodar o Servidor MCP).
+- **Claude Desktop** instalado localmente (Requisito para o teste mínimo de raciocínio).
+
+---
+
+# Instalação
+
+Siga as instruções abaixo para instanciar o grafo e popular a base de dados com os artefatos avaliados no artigo:
+
+**1. Clone o repositório e acesse a pasta do projeto:**
+
+```bash
+git clone [https://github.com/ComputerNetworks-UFRGS/compose-kg-mcp.git](https://github.com/ComputerNetworks-UFRGS/compose-kg-mcp.git)
+cd compose-kg-mcp
 ```
 
-## 📚 Ontology
+**2. Configure as Variáveis de Ambiente:**
+Renomeie o arquivo .env.example para .env na raiz do projeto.
 
-The Knowledge Graph schema is based on the Docker Infrastructure Ontology, defined in docker_infra.ttl. Key classes include:
+```
+cp .env.example .env
+```
 
-- ```:Service```
+**3. Inicialize o Banco de Dados Neo4j:**
 
-- ```:Image```
+```
+docker compose up -d
+```
 
-- ```:PortMapping (with properties hostPort, protocol)```
+**4. Instale as Dependências Python:**
+Recomendamos o uso de um ambiente virtual para não gerar conflitos.
 
-- ```:EnvironmentVariable (Scoped by Service URI)```
+```
+python -m venv venv
+source venv/bin/activate  # Em windows utilize: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-- ```:Network```
+**5. Execute a Ingestão do Grafo (ETL):**
+Esta etapa processa os arquivos em `parser_neo4j/docker_composes/` (Cenários 1, 2, 3 e 4) e constrói o grafo.
 
-- ```:Volume```
+_Uma mensagem de "Processamento concluído!" indicará que a base de conhecimento está pronta._
 
-## 🧠 Example Prompts
-Once connected, you can ask Claude questions like:
+---
 
-- "Analyze the dependency chain for the kibana service."
+# Teste Mínimo
 
-- "Check if there are any critical port conflicts on the host."
+O teste mínimo proposto para validar a integração se dá via a conexão do servidor MCP com o Claude Desktop do avaliador.
+Atualmente o Claude Desktop só está disponível para Windows e MacOS. Porém, há diversos clientes compatíveis, podendo ser acessado em: https://modelcontextprotocol.io/clients.
 
-- "List all services connected to the elastic network."
+Para o Claude, abra as configurações do Claude Desktop e adicione seu servidor MCP, substituíndo `CAMINHO/ABSOLUTO/PARA/` pelo local exato onde você clonou este repositório:
+
+```
+{
+  "mcpServers": {
+    "docker-infra-manager": {
+      "command": "python",
+      "args": [
+        "/CAMINHO/ABSOLUTO/PARA/compose-kg-mcp/mcp_server/server.py"
+      ]
+    }
+  }
+}
+```
+
+Reinicie o Claude Desktop e em um novo chat, verifique se o MCP foi ativo e se as ferramentas estão prontas para uso.
+
+---
+
+# Experimentos
+
+No artigo, apresentamos 4 casos de estudo:
+
+**Cenário A: Análise de Impacto em Cadeia:**
+
+`parser_neo4j/docker_composes/case_1.yaml`
+
+- **Prompt**: _'Utilize suas ferramentas MCP para fazer uma análise de impacto em cadeia. Se o serviço 'ecommerce-db' falhar, quais outros serviços da infraestrutura serão afetados direta ou indiretamente?'_
+- **Resultado Esperado:** O agente deve rastrear a cadeia completa de dependências e identificar que, além do `inventory-api` (dependente direto), o serviço final de frontend `storefront-ui` será severamente impactado pela falha do banco de dados.
+
+**Cenário B: Integridade de Volumes:**
+
+`parser_neo4j/docker_composes/case_2.yaml`
+
+- **Prompt**: _'Faça uma varredura na infraestrutura usando as ferramentas e me informe se existe algum conflito crítico de volume, ou seja, múltiplos serviços gravando no mesmo Host Path.'_
+- **Resultado Esperado:** O agente deve alertar preventivamente para uma condição crítica de corrupção de dados (colisão de `HostPath`). Ele identificará que dois projetos distintos estão configurados erroneamente para montar o mesmo diretório local simultaneamente para a persistência de dados.
+
+**Cenário C: Detecção de Movimentação Lateral**
+
+`parser_neo4j/docker_composes/case_3.yaml`
+
+- **Prompt**: _'Execute uma análise de alcançabilidade de rede (network reachability) entre o 'load-balancer' e o 'vault-database'. Existe um caminho possível de ataque lateral entre eles?'_
+- **Resultado Esperado:** O sistema deve detetar uma violação da política de segmentação de rede. O agente traçará o caminho de transição, revelando que um atacante que comprometa o `load-balancer` (na zona pública) poderia alcançar o `vault-database` (na zona segura) utilizando o serviço `legacy-auth-service` como ponto de pivô.
+
+**Cenário D: Conflito de Portas**
+
+`parser_neo4j/docker_composes/case_4.yaml`
+
+- **Prompt**: _''Audite todas as portas da infraestrutura. Existe algum conflito de portas instanciadas no host? Se sim, quais serviços estão em colisão?_
+- **Resultado Esperado:** O agente consultará o grafo global e identificará que dois nós de serviços distintos convergem para a mesma porta no host. O sistema alertará sobre a impossibilidade física desta implantação simultânea.
+
+# Estrutura do Projeto
+
+```text
+├── docker-compose.yaml    # Arquivo de configuração do Docker Compose para iniciar o banco de dados Neo4j
+├── LICENSE                # Arquivo de licença do projeto (MIT)
+├── README.md              # Este arquivo, contendo instruções e documentação
+├── requirements.txt       # Lista de dependências Python necessárias
+├── mcp_server/
+│   └── server.py          # Script principal do servidor MCP
+├── ontology/
+│   └── base_ontology.ttl  # Arquivo de ontologia em formato TTL
+├── parser_neo4j/
+│   └── parser.py          # Script do parser que processa os arquivos Docker Compose e constrói o grafo
+│   └── docker_composes/
+│        ├── case_1.yaml        # Cenário A: Análise de Impacto em Cadeia
+│        ├── case_2.yaml        # Cenário B: Integridade de Volumes
+│        ├── case_3.yaml        # Cenário C: Detecção de Movimentação Lateral
+│        └── case_4.yaml        # Cenário D: Conflito de Portas
+```
+
+---
+
+LICENSE
+Este projeto está licenciado sob a Licença MIT - consulte o arquivo [LICENSE](LICENSE) para obter mais detalhes.
