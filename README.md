@@ -61,6 +61,10 @@ pip install -r requirements.txt
 **5. Execute a Ingestão do Grafo (ETL):**
 Esta etapa processa os arquivos em `parser_neo4j/docker_composes/` (Cenários 1, 2, 3 e 4) e constrói o grafo.
 
+```
+python parser_neo4j/parser.py
+```
+
 _Uma mensagem de "Processamento concluído!" indicará que a base de conhecimento está pronta._
 
 ---
