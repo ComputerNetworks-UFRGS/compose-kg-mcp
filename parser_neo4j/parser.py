@@ -11,6 +11,7 @@ load_dotenv()
 URI = "bolt://localhost:7687"
 USER = "neo4j"
 PASSWORD = os.environ.get('NEO4J_PASSWORD')
+URI_BASE = "http://infra.knowledge/docker#"
 
 def execute_cypher_commands(commands: List[str], context_name: str, step_description: str):
 
@@ -207,11 +208,11 @@ if __name__ == '__main__':
         print("Nenhum arquivo encontrado.")
         exit(1)
 
-    for file_path in compose_files:
-        file_name = os.path.basename(file_path)
-        print(f"\n Processando: {file_name}")
-        
-        try:
+    try:
+        for file_path in compose_files:
+            file_name = os.path.basename(file_path)
+            print(f"\n Processando: {file_name}")
+            
             with open(file_path, 'r', encoding='utf-8') as f:
                 yaml_data = yaml.safe_load(f)
             
@@ -223,7 +224,7 @@ if __name__ == '__main__':
                 detail_commands = generate_service_detail_commands(yaml_data, file_name, service_name, config)
                 execute_cypher_commands(detail_commands, service_name, "Details & Relations")
 
-        except Exception as e:
-            print(f"Erro: {e}")
+            print("\n Processamento concluído!")
 
-    print("\n Processamento concluído!")
+    except Exception as e:
+        print(f"Erro: {e}")
