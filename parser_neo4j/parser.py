@@ -14,7 +14,18 @@ PASSWORD = os.environ.get('NEO4J_PASSWORD')
 URI_BASE = "http://infra.knowledge/docker#"
 
 def execute_cypher_commands(commands: List[str], context_name: str, step_description: str):
+    """
+    Executes a list of Cypher commands in the Neo4j database using the configured credentials.
+    Provides error handling and logging for each command execution.
 
+    Args:
+        commands (List[str]): List of Cypher queries to execute.
+        context_name (str): Name of the context (e.g., file or service name) for logging purposes.
+        step_description (str): Description of the current step for logging and error messages.
+
+    Raises:
+        Exception: If any Cypher command fails, the exception is raised after logging the error.
+    """
     try:
         driver = GraphDatabase.driver(URI, auth=basic_auth(USER, PASSWORD))
         driver.verify_connectivity()
@@ -37,10 +48,31 @@ def execute_cypher_commands(commands: List[str], context_name: str, step_descrip
 
 
 def sanitize(text: str) -> str:
+    """
+    Sanitizes a string by replacing any non-alphanumeric characters (except underscores) with underscores.
+    This is useful for creating safe identifiers for URIs or variable names.
+
+    Args:
+        text (str): The input string to sanitize.
+
+    Returns:
+        str: The sanitized string with only alphanumeric characters and underscores.
+    """
     return re.sub(r'[^a-zA-Z0-9_]', '_', str(text))
 
 
 def generate_service_base_nodes(yaml_data: Dict, file_name: str) -> List[str]:
+    """
+    Generates Cypher commands to create base Service nodes for each service defined in the YAML data.
+    Each service gets a unique URI based on the file name and service name.
+
+    Args:
+        yaml_data (Dict): Parsed YAML data from a Docker Compose file.
+        file_name (str): Name of the Docker Compose file (used for URI generation and node properties).
+
+    Returns:
+        List[str]: List of Cypher MERGE commands for creating Service nodes.
+    """
     commands = []
     file_prefix = sanitize(file_name.replace('.yml', '')) + "_"
     services = yaml_data.get('services', {})
@@ -60,7 +92,20 @@ def generate_service_base_nodes(yaml_data: Dict, file_name: str) -> List[str]:
 
 
 def generate_service_detail_commands(yaml_data: Dict, file_name: str, service_name: str, config: Dict) -> List[str]:
+    """
+    Generates Cypher commands for detailed service configurations, including images, ports, environment variables,
+    volumes, dependencies, and networks. First removes existing relationships for the service, then creates new ones
+    based on the current configuration.
 
+    Args:
+        yaml_data (Dict): Parsed YAML data from a Docker Compose file.
+        file_name (str): Name of the Docker Compose file.
+        service_name (str): Name of the specific service to process.
+        config (Dict): Configuration dictionary for the service from the YAML data.
+
+    Returns:
+        List[str]: List of Cypher commands for creating nodes and relationships for service details.
+    """
     commands = []
     
     file_prefix = sanitize(file_name.replace('.yml', '')) + "_"
