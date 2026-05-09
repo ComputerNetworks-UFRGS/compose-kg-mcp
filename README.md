@@ -130,12 +130,38 @@ Atualmente o Claude Desktop só está disponível para Windows e MacOS. Porém, 
 Para o Claude, abra as configurações do Claude Desktop e adicione seu servidor MCP, substituíndo `CAMINHO/ABSOLUTO/PARA/` pelo local exato onde você clonou este repositório:
 
 ```
+# Sem python virtual environment
 {
   "mcpServers": {
     "docker-infra-manager": {
       "command": "python",
       "args": [
         "/CAMINHO/ABSOLUTO/PARA/compose-kg-mcp/mcp_server/server.py"
+      ]
+    }
+  }
+}
+
+# Com python virtual environment - linux
+{
+  "mcpServers": {
+    "docker-infra-manager": {
+      "command": "bash",
+      "args": [
+        "-c",
+        "cd /CAMINHO/ABSOLUTO/PARA/compose-kg-mcp && source venv/bin/activate && python mcp_server/server.py"
+      ]
+    }
+  }
+}
+
+# Com python virtual environment - windows
+{
+  "mcpServers": {
+    "docker-infra-manager": {
+      "command": "CAMINHO\\ABSOLUTO\\PARA\\compose-kg-mcp\\venv\\Scripts\\python.exe",
+      "args": [
+        "CAMINHO\\ABSOLUTO\\PARA\\compose-kg-mcp\\mcp_server\\server.py"
       ]
     }
   }
