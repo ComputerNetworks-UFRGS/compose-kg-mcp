@@ -27,7 +27,9 @@ Este README.md está organizado da seguinte forma:
 ├── requirements.txt       # Lista de dependências Python necessárias
 ├── .env_example           # Exemplo de arquivo de configuração de ambiente
 ├── mcp_server/
-│   └── base_ontology.ttl  # Arquivo de ontologia em formato TTL, define as classes e relações para o grafo de conhecimento da infraestrutura Docker, utilizado implicitamente na construção do parser.
+│   └── server.py          # Script principal do servidor MCP
+├── ontology/
+|   └── base_ontology.ttl  # Arquivo de ontologia em formato TTL, define as classes e relações para o grafo de conhecimento da infraestrutura Docker, utilizado implicitamente na construção do parser.
 ├── parser_neo4j/
 │   └── parser.py          # Script do parser que processa os arquivos Docker Compose e constrói o grafo
 │   └── docker_composes/
